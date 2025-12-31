@@ -4,16 +4,6 @@
 #include <time.h>
 #include <ctype.h>
 
-#define RESET   "\033[0m"
-#define RED     "\033[1;31m"
-#define GREEN   "\033[1;32m"
-#define YELLOW  "\033[1;33m"
-#define BLUE    "\033[1;34m"
-#define MAGENTA "\033[1;35m"
-#define CYAN    "\033[1;36m"
-#define WHITE   "\033[1;37m"
-#define BOLD    "\033[1m"
-
 #define MAX_INVENTORY 10
 #define MAX_TESTS 5
 #define MAX_CART 15
@@ -38,7 +28,7 @@ typedef struct {
     char name[MAX_NAME];
     char phone[11]; 
     char address[MAX_ADDRESS];
-    float walletBalance; 
+
 } User;
 
 typedef struct {
@@ -71,10 +61,10 @@ void addTestToCart(BloodTest *testMenu, int testCount, CartItem *cart, int *cart
 void viewCart(CartItem *cart, int cartCount);
 float calculateTotal(CartItem *cart, int cartCount);
 void saveOrderToFile(Order *order);
-void processPayment(char *paymentBuffer, float amount, User *user);
-void manageWallet(User *user);
+void processPayment(char *paymentBuffer, float amount);
 
 void clearScreen() {
+
     printf("\033[H\033[J");
 }
 
@@ -86,7 +76,7 @@ int main() {
     displayTermsAndConditions(&termsAccepted);
     
     if (!termsAccepted) {
-        printf(RED "\nTerms and Conditions not accepted. Exiting the program.\n" RESET);
+        printf("\nTerms and Conditions not accepted. Exiting the program.\n");
         return 0; 
     }
 
@@ -114,8 +104,8 @@ int main() {
     int choice = 0;
 
     clearScreen();
-    printf(BLUE "=== Welcome to Quick-Med Pharmacy & Labs ===\n" RESET);
-    printf(CYAN "     (Your 10-minute delivery partner)\n\n" RESET);
+    printf("=== Welcome to Quick-Med Pharmacy & Labs ===\n");
+    printf("     (Your 10-minute delivery partner)\n\n");
     
     getUserDetails(&customer);
 
@@ -127,7 +117,7 @@ int main() {
                 clearScreen();
                 displayMedicines(inventory, medCount);
                 addMedicineToCart(inventory, medCount, cart, &cartCount);
-                printf(YELLOW "\nPress Enter to return to menu..." RESET);
+                printf("\nPress Enter to return to menu...");
                 clearInputBuffer();
                 getchar(); 
                 break;
@@ -135,29 +125,26 @@ int main() {
                 clearScreen();
                 displayBloodTests(testMenu, testCount);
                 addTestToCart(testMenu, testCount, cart, &cartCount);
-                printf(YELLOW "\nPress Enter to return to menu..." RESET);
+                printf("\nPress Enter to return to menu...");
                 clearInputBuffer();
                 getchar();
                 break;
-            case 3:
-                manageWallet(&customer);
+            case 3: 
+                clearScreen();
+                viewCart(cart, cartCount);
+                printf("Press Enter to return to menu...");
+                getchar(); 
                 break;
             case 4:
                 clearScreen();
-                viewCart(cart, cartCount);
-                printf(YELLOW "Press Enter to return to menu..." RESET);
-                getchar(); 
-                break;
-            case 5:
-                clearScreen();
                 if (cartCount == 0) {
-                    printf(RED "Your cart is empty. Please add items before checking out.\n\n" RESET);
-                    printf(YELLOW "Press Enter to return to menu..." RESET);
+                    printf("Your cart is empty. Please add items before checking out.\n\n");
+                    printf("Press Enter to return to menu...");
                     getchar();
                 } else {
-                    printf(CYAN "\n=========================================\n");
+                    printf("\n=========================================\n");
                     printf("          FINALIZING YOUR ORDER          \n");
-                    printf("=========================================\n" RESET);
+                    printf("=========================================\n");
                     Order finalOrder;
                     srand(time(NULL));
                     finalOrder.orderId = time(NULL);
@@ -166,14 +153,14 @@ int main() {
                     finalOrder.itemCount = cartCount;
                     finalOrder.totalAmount = calculateTotal(cart, cartCount);
                     
-                    printf("Total Amount to Pay: " GREEN "%.2f\n" RESET, finalOrder.totalAmount);
+                    printf("Total Amount to Pay: %.2f\n", finalOrder.totalAmount);
                     
-                    processPayment(finalOrder.paymentMethod, finalOrder.totalAmount, &customer);        
+                    processPayment(finalOrder.paymentMethod, finalOrder.totalAmount);        
                     
                     saveOrderToFile(&finalOrder);                    
                     
-                    printf(GREEN "\nOrder Confirmed!\n" RESET);
-                    printf("Your Order ID is: " BOLD "%ld\n" RESET, finalOrder.orderId);
+                    printf("\nOrder Confirmed!\n");
+                    printf("Your Order ID is: %ld\n", finalOrder.orderId);
                     printf("Total Amount: %.2f\n", finalOrder.totalAmount);
                     printf("Payment Mode: %s\n", finalOrder.paymentMethod); 
                     
@@ -187,7 +174,7 @@ int main() {
                         }
                     }
 
-                    printf(CYAN "\n--- Service Details ---\n" RESET);
+                    printf("\n--- Service Details ---\n");
                     if (hasMedicines && hasTests) {
                         printf("1. MEDICINES: Will be delivered in 10 minutes to: %s\n", finalOrder.customer.address);
                         printf("2. BLOOD TESTS: A specialized Lab Technician will visit your address shortly for sample collection.\n");
@@ -200,20 +187,20 @@ int main() {
                         printf("Your order will be delivered in 10 minutes to: %s\n", finalOrder.customer.address);
                     }
                     
-                    printf(MAGENTA "\nThank you for using Quick-Med!\n" RESET);
-                    choice = 6; 
+                    printf("\nThank you for using Quick-Med!\n");
+                    choice = 5; 
                 }
                 break;
-            case 6:
-                printf(MAGENTA "\nThank you for visiting Quick-Med. Goodbye!\n" RESET);
+            case 5: 
+                printf("\nThank you for visiting Quick-Med. Goodbye!\n");
                 break;
             default:
-                printf(RED "\nInvalid choice. Please try again.\n\n" RESET);
-                printf(YELLOW "Press Enter to continue..." RESET);
+                printf("\nInvalid choice. Please try again.\n\n");
+                printf("Press Enter to continue...");
                 clearInputBuffer();
                 getchar();
         }
-    } while (choice != 6);
+    } while (choice != 5);
 
     return 0;
 }
@@ -222,110 +209,25 @@ void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
-void manageWallet(User *user) {
-    int wChoice;
-    float amount;
-    char recipient[50];
-    do {
-        clearScreen();
-        printf(MAGENTA "========================================\n");
-        printf("           MY WALLET DASHBOARD          \n");
-        printf("========================================\n" RESET);
-        printf("Current Balance: " GREEN "Rs. %.2f\n" RESET, user->walletBalance);
-        printf(MAGENTA "----------------------------------------\n" RESET);
-        printf("1. Add Money to Wallet\n");
-        printf("2. Make a Payment / Transfer\n"); 
-        printf("3. Go Back to Main Menu\n");
-        printf(MAGENTA "----------------------------------------\n" RESET);
-        printf("Enter choice: ");
-        
-        if (scanf("%d", &wChoice) == 1) {
-            clearInputBuffer();
-            switch (wChoice) {
-                case 1:
-                    printf("\nEnter amount to add: Rs. ");
-                    if (scanf("%f", &amount) == 1) {
-                        clearInputBuffer();
-                        if (amount > 0) {
-                            user->walletBalance += amount;
-                            printf(GREEN "\nSuccess! Rs. %.2f added to your wallet.\n" RESET, amount);
-                        } else {
-                            printf(RED "Error: Amount must be greater than 0.\n" RESET);
-                        }
-                    } else {
-                        clearInputBuffer();
-                        printf(RED "Invalid amount entered.\n" RESET);
-                    }
-                    printf(YELLOW "\nPress Enter to continue..." RESET);
-                    getchar();
-                    break;
-                    
-                case 2: 
-                    printf(CYAN "\n--- Make a Payment ---\n" RESET);
-                    printf("Enter Recipient Name (or Bill ID): ");
-                    fgets(recipient, 50, stdin);
-                    recipient[strcspn(recipient, "\n")] = 0; 
-                    printf("Enter Amount to Pay: Rs. ");
-                    if (scanf("%f", &amount) == 1) {
-                        clearInputBuffer();
-                        if (amount <= 0) {
-                             printf(RED "Error: Invalid amount.\n" RESET);
-                        } else if (amount > user->walletBalance) {
-                            printf(RED "Error: Insufficient Balance! You only have Rs. %.2f\n" RESET, user->walletBalance);
-                        } else {
-                            user->walletBalance -= amount;
-                            printf(GREEN "\n----------------------------------\n");
-                            printf("       TRANSACTION SUCCESSFUL\n");
-                            printf("----------------------------------\n" RESET);
-                            printf("Paid To:      %s\n", recipient);
-                            printf("Amount:       Rs. %.2f\n", amount);
-                            printf("Ref ID:       TXN%ld\n", time(NULL) + rand()%1000);
-                            printf("New Balance:  Rs. %.2f\n", user->walletBalance);
-                            printf(GREEN "----------------------------------\n" RESET);
-                        }
-                    } else {
-                        clearInputBuffer();
-                        printf(RED "Invalid input.\n" RESET);
-                    }
-                    printf(YELLOW "\nPress Enter to continue..." RESET);
-                    getchar();
-                    break;
-                    
-                case 3:
-                  
-                    break;
-                    
-                default:
-                    printf(RED "Invalid choice.\n" RESET);
-                    printf(YELLOW "Press Enter to continue..." RESET);
-                    getchar();
-            }
-        } else {
-            clearInputBuffer();
-            printf(RED "Invalid input.\n" RESET);
-            printf(YELLOW "Press Enter to continue..." RESET);
-            getchar();
-        }
-    } while (wChoice != 3);
-}
+
 
 void displayTermsAndConditions(int *accepted) {
     char choice;
     *accepted = 0; 
-    printf(YELLOW "\n=======================================================\n");
-    printf("         QUICK-MED TERMS & CONDITIONS\n");
-    printf("=======================================================\n" RESET);
+    printf("\n=======================================================\n");
+    printf("          QUICK-MED TERMS & CONDITIONS\n");
+    printf("=======================================================\n");
     printf("1. Medicine orders require a valid prescription.\n");
     printf("2. Blood test results will be delivered digitally within 48 hours.\n");
     printf("3. Delivery is guaranteed within the service area only.\n");
     printf("4. All prices are final and include applicable taxes.\n");
     printf("5. Cancellation after payment is subject to a 10%% fee.\n");
-    printf(YELLOW "-------------------------------------------------------\n" RESET);
+    printf("-------------------------------------------------------\n");
     printf("Do you agree to the Terms & Conditions? (Y/N): ");
         if (scanf(" %c", &choice) == 1) { 
         if (toupper(choice) == 'Y') {
             *accepted = 1;
-            printf(GREEN "\nTerms accepted. Proceeding to user details...\n" RESET);
+            printf("\nTerms accepted. Proceeding to user details...\n");
         } else {
             *accepted = 0;
         }
@@ -334,30 +236,30 @@ void displayTermsAndConditions(int *accepted) {
 }
 
 void displaySplashScreen() {
-    printf(CYAN "=======================================================\n");
-    printf("                 C PROGRAMMING PROJECT\n");
+    printf("=======================================================\n");
+    printf("                  C PROGRAMMING PROJECT\n");
     printf("=======================================================\n");
     printf(" Project Name: Quick-Med Pharmacy & Lab Management System\n");
     printf("-------------------------------------------------------\n");
     printf(" Submitted To: Pankaj Badoni\n");
     printf(" Submitted By: Ayushi Mishra\n");
-    printf("=======================================================\n" RESET);
+    printf("=======================================================\n");
     printf("\nPress ENTER to continue to the Terms & Conditions...\n");
     clearInputBuffer();
 }
 
-void processPayment(char *paymentBuffer, float amount, User *user) {
+void processPayment(char *paymentBuffer, float amount) {
     int pChoice;
     int valid = 0;
     
-    printf(CYAN "\n--- Select Payment Method ---\n" RESET);
+    printf("\n--- Select Payment Method ---\n");
     printf("1. Cash on Delivery / Pay at Collection\n");
     printf("2. Credit/Debit Card\n");
     printf("3. UPI / Online Wallet\n");
-    printf("4. Quick-Med Wallet (Balance: " GREEN "Rs. %.2f" RESET ")\n", user->walletBalance); 
+  
     
     while (!valid) {
-        printf("Enter choice (1-4): ");
+        printf("Enter choice (1-3): ");
         if (scanf("%d", &pChoice) == 1) {
             clearInputBuffer();
             switch (pChoice) {
@@ -366,38 +268,23 @@ void processPayment(char *paymentBuffer, float amount, User *user) {
                     valid = 1;
                     break;
                 case 2:
-                    printf(YELLOW "Processing Card Payment... [SIMULATION]\n" RESET);
-                    printf(GREEN "Payment Successful!\n" RESET);
+                    printf("Processing Card Payment...\n");
+                    printf("Payment Successful!\n");
                     strcpy(paymentBuffer, "Credit/Debit Card");
                     valid = 1;
                     break;
                 case 3:
-                    printf(YELLOW "Processing UPI Payment... [SIMULATION]\n" RESET);
-                    printf(GREEN "Payment Successful!\n" RESET);
+                    printf("Processing UPI Payment...\n");
+                    printf("Payment Successful!\n");
                     strcpy(paymentBuffer, "UPI/Wallet");
                     valid = 1;
                     break;
-                case 4:
-                    if (user->walletBalance >= amount) {
-                        user->walletBalance -= amount;
-                        printf(GREEN "\nPayment Successful!\n" RESET);
-                        printf("Rs. %.2f deducted from your wallet.\n", amount);
-                        printf("New Balance: Rs. %.2f\n", user->walletBalance);
-                        strcpy(paymentBuffer, "Quick-Med Wallet");
-                        valid = 1;
-                    } else {
-                        printf(RED "\nError: Insufficient Funds!\n" RESET);
-                        printf("Your Balance: %.2f\n", user->walletBalance);
-                        printf("Required: %.2f\n", amount);
-                        printf(YELLOW "Go to Main Menu Option 3 to add money, or select another method.\n\n" RESET);
-                    }
-                    break;
                 default:
-                    printf(RED "Invalid payment choice. Please try again.\n" RESET);
+                    printf("Invalid payment choice. Please try again.\n");
             }
         } else {
             clearInputBuffer();
-            printf(RED "Invalid input. Please enter a number.\n" RESET);
+            printf("Invalid input. Please enter a number.\n");
         }
     }
 }
@@ -416,7 +303,7 @@ void getUserDetails(User *user) {
             tempPhone[strcspn(tempPhone, "\n")] = 0;
 
             if (strlen(tempPhone) != 10) {
-                printf(RED "Error: Phone number must be exactly 10 digits.\n" RESET);
+                printf("Error: Phone number must be exactly 10 digits.\n");
                 continue; 
             }
             int valid = 1;
@@ -430,7 +317,7 @@ void getUserDetails(User *user) {
                 strcpy(user->phone, tempPhone);
                 break;
             } else {
-                printf(RED "Error: Invalid character found. Phone number cannot contain letters or special characters.\n" RESET);
+                printf("Error: Invalid character found. Phone number cannot contain letters or special characters.\n");
             }
         }
     }
@@ -438,29 +325,24 @@ void getUserDetails(User *user) {
     fgets(user->address, MAX_ADDRESS, stdin);
     user->address[strcspn(user->address, "\n")] = 0;
 
-    user->walletBalance = 100.00; 
-
-    printf(BLUE "\nWelcome, %s! Let's get your order.\n" RESET, user->name);
-    printf(YELLOW "NOTE: A sign-up bonus of Rs. 100.00 has been added to your Quick-Med Wallet.\n" RESET);
+    printf("\nWelcome, %s! Let's get your order.\n", user->name);
     
-    printf(YELLOW "\nPress Enter to go to Main Menu..." RESET);
-    getchar(); // Pause before clearing screen for main menu
+    printf("\nPress Enter to go to Main Menu...");
+    getchar(); 
 }
 
-// --- MAIN MENU (Themed Cyan) ---
 int displayMainMenu() {
-    clearScreen(); // Gives the "New Page" effect
+    clearScreen(); 
     int choice = 0;
-    printf(CYAN "========================================\n");
-    printf("         QUICK-MED MAIN MENU           \n");
-    printf("========================================\n" RESET);
+    printf("========================================\n");
+    printf("          QUICK-MED MAIN MENU            \n");
+    printf("========================================\n");
     printf("1. Order Medicines\n");
     printf("2. Book a Blood Test\n");
-    printf("3. My Wallet (Check/Add Money)\n");
-    printf("4. View Cart\n");
-    printf("5. Checkout & Place Order\n");
-    printf("6. Exit\n");
-    printf(CYAN "----------------------------------------\n" RESET);
+    printf("3. View Cart\n");
+    printf("4. Checkout & Place Order\n");
+    printf("5. Exit\n");
+    printf("----------------------------------------\n");
     printf("Enter your choice: ");
     if (scanf("%d", &choice) != 1) {
         choice = -1; 
@@ -470,8 +352,8 @@ int displayMainMenu() {
 }
 
 void displayMedicines(Medicine *inventory, int count) {
-    printf(CYAN "\n--- Available Medicines ---\n" RESET);
-    printf(BOLD "ID   | Name                   | Price   | Stock\n" RESET);
+    printf("\n--- Available Medicines ---\n");
+    printf("ID   | Name                   | Price   | Stock\n");
     printf("-----|----------------------|---------|-------\n");
     for (int i = 0; i < count; i++) {
         printf("%-4d | %-20.20s | %-7.2f | %d\n",
@@ -481,8 +363,8 @@ void displayMedicines(Medicine *inventory, int count) {
 }
 
 void displayBloodTests(BloodTest *tests, int count) {
-    printf(CYAN "\n--- Available Blood Tests ---\n" RESET);
-    printf(BOLD "ID   | Name                           | Price\n" RESET);
+    printf("\n--- Available Blood Tests ---\n");
+    printf("ID   | Name                           | Price\n");
     printf("-----|-----------------------------|---------\n");
     for (int i = 0; i < count; i++) {
         printf("%-4d | %-27.27s | %.2f\n",
@@ -496,7 +378,7 @@ void addMedicineToCart(Medicine *inventory, int medCount, CartItem *cart, int *c
     printf("Enter Medicine ID to add to cart: ");
     if (scanf("%d", &id) != 1) {
         clearInputBuffer();
-        printf(RED "Invalid ID.\n" RESET);
+        printf("Invalid ID.\n");
         return;
     }
     int foundIndex = -1;
@@ -507,23 +389,23 @@ void addMedicineToCart(Medicine *inventory, int medCount, CartItem *cart, int *c
         }
     }
     if (foundIndex == -1) {
-        printf(RED "Invalid Medicine ID.\n" RESET);
+        printf("Invalid Medicine ID.\n");
         clearInputBuffer();
         return;
     }
     printf("Enter quantity (Stock: %d): ", inventory[foundIndex].stock);
     if (scanf("%d", &quantity) != 1) {
         clearInputBuffer();
-        printf(RED "Invalid quantity.\n" RESET);
+        printf("Invalid quantity.\n");
         return;
     }
     clearInputBuffer();
     if (quantity <= 0) {
-        printf(RED "Quantity must be at least 1.\n" RESET);
+        printf("Quantity must be at least 1.\n");
     } else if (quantity > inventory[foundIndex].stock) {
-        printf(RED "Sorry, only %d units are in stock.\n" RESET, inventory[foundIndex].stock);
+        printf("Sorry, only %d units are in stock.\n", inventory[foundIndex].stock);
     } else if (*cartCount >= MAX_CART) {
-        printf(RED "Your cart is full!\n" RESET);
+        printf("Your cart is full!\n");
     } else {
         CartItem *newItem = &cart[*cartCount];
         newItem->id = inventory[foundIndex].id;
@@ -533,7 +415,7 @@ void addMedicineToCart(Medicine *inventory, int medCount, CartItem *cart, int *c
         newItem->unitPrice = inventory[foundIndex].price;
         inventory[foundIndex].stock -= quantity;
         (*cartCount)++;
-        printf(GREEN "Added %d x %s to your cart.\n" RESET, quantity, newItem->name);
+        printf("Added %d x %s to your cart.\n", quantity, newItem->name);
     }
 }
 
@@ -542,7 +424,7 @@ void addTestToCart(BloodTest *testMenu, int testCount, CartItem *cart, int *cart
     printf("Enter Test ID to book: ");
     if (scanf("%d", &id) != 1) {
         clearInputBuffer();
-        printf(RED "Invalid ID.\n" RESET);
+        printf("Invalid ID.\n");
         return;
     }
     clearInputBuffer();
@@ -554,11 +436,11 @@ void addTestToCart(BloodTest *testMenu, int testCount, CartItem *cart, int *cart
         }
     }
     if (foundIndex == -1) {
-        printf(RED "Invalid Test ID.\n" RESET);
+        printf("Invalid Test ID.\n");
         return;
     }
     if (*cartCount >= MAX_CART) {
-        printf(RED "Your cart is full!\n" RESET);
+        printf("Your cart is full!\n");
     } else {
         CartItem *newItem = &cart[*cartCount];
         newItem->id = testMenu[foundIndex].id;
@@ -567,7 +449,7 @@ void addTestToCart(BloodTest *testMenu, int testCount, CartItem *cart, int *cart
         newItem->quantity = 1;
         newItem->unitPrice = testMenu[foundIndex].price;
         (*cartCount)++;
-        printf(GREEN "Added '%s' to your cart.\n" RESET, newItem->name);
+        printf("Added '%s' to your cart.\n", newItem->name);
     }
 }
 
@@ -581,12 +463,12 @@ float calculateTotal(CartItem *cart, int cartCount) {
 
 void viewCart(CartItem *cart, int cartCount) {
     if (cartCount == 0) {
-        printf(YELLOW "\nYour cart is empty.\n\n" RESET);
+        printf("\nYour cart is empty.\n\n");
         return;
     }
     
-    printf(CYAN "\n--- Your Cart (%d items) ---\n" RESET, cartCount);
-    printf(BOLD "Type  | Qty | Name                   | Unit Price | Total\n" RESET);
+    printf("\n--- Your Cart (%d items) ---\n", cartCount);
+    printf("Type  | Qty | Name                   | Unit Price | Total\n");
     printf("------|-----|----------------------|------------|---------\n");
     for (int i = 0; i < cartCount; i++) {
         printf("%-5s | %-3d | %-20.20s | %-10.2f | %-7.2f\n",
@@ -598,13 +480,13 @@ void viewCart(CartItem *cart, int cartCount) {
     }
     float total = calculateTotal(cart, cartCount);
     printf("------------------------------------------------------\n");
-    printf("Grand Total: " BOLD "%.2f\n\n" RESET, total);
+    printf("Grand Total: %.2f\n\n", total);
 }
 
 void saveOrderToFile(Order *order) {
     FILE *file = fopen(ORDER_FILENAME, "a");
     if (file == NULL) {
-        printf(RED "CRITICAL ERROR: Could not save order to file '%s'.\n" RESET, ORDER_FILENAME);
+        printf("CRITICAL ERROR: Could not save order to file '%s'.\n", ORDER_FILENAME);
         return;
     }
     time_t t = time(NULL);
@@ -631,5 +513,5 @@ void saveOrderToFile(Order *order) {
     fprintf(file, "===================================================\n\n");
     fclose(file);
     
-    printf("Order details saved to " YELLOW "%s\n" RESET, ORDER_FILENAME);
+    printf("Order details saved to %s\n", ORDER_FILENAME);
 }
