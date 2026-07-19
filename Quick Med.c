@@ -4,6 +4,8 @@
 #include <time.h>
 #include <ctype.h>
 
+
+
 #define MAX_INVENTORY 10
 #define MAX_TESTS 5
 #define MAX_CART 15
